@@ -1,0 +1,21 @@
+{
+    "stacks": {
+        "core_stack_name": "CoreStack",
+        "back_end_stack_name": "BackEndStack",
+        "front_end_stack_name": "FrontEndStack",
+        "infra_stack_name": "InfraStack",
+        "agent_core_stack_name": "AgentCoreStack"
+    },
+    "environment": {
+        "key": "value"
+    },
+    "vpc": {
+        "cidr_range": "10.0.0.0/16",
+        "cidr_mask": 24
+    },
+    "embedding_model_arn": "arn:aws:bedrock:us-east-1::foundation-model/amazon.nova-2-multimodal-embeddings-v1:0",
+    "parsing_model_arn": "arn:aws:bedrock:us-east-1:123456789012:inference-profile/global.amazon.nova-2-lite-v1:0",
+    "multi_agent_model_id": "us.anthropic.claude-sonnet-4-5-20250929-v1:0",
+    "response_generator_model_id": "us.anthropic.claude-opus-4-5-20251101-v1:0",
+    "document_classifier_model_id": "us.anthropic.claude-3-5-sonnet-20240620-v1:0"
+}

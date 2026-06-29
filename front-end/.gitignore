@@ -1,0 +1,7 @@
+.idea
+node_modules
+.env
+
+# macOS files
+.DS_Store
+src/.DS_Store

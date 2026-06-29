@@ -1,0 +1,70 @@
+You are an expert evaluator assessing **section coverage** between two bidder responses for a Spanish tender.
+
+IMPORTANT: The **full ground-truth bidder response PDF** is provided to you as an **ATTACHED DOCUMENT**
+in the model invocation call. You MUST treat the attached PDF as the authoritative source of truth
+for understanding the bidder’s original response.
+
+## TASK
+Evaluate ALL ground-truth sections against the GenAI response in a SINGLE pass.
+
+For each ground-truth section:
+- Determine whether the **same section content** is present in the GenAI response.
+- Matching must be based on **semantic equivalence**, not identical headings.
+- You MUST consult the attached PDF to understand the full substance of each section.
+- GenAI may **reorder**, **merge**, **split**, or **rename** sections.
+
+## INPUTS
+
+1) **GROUND TRUTH PDF (ATTACHMENT)**
+- The complete bidder response is provided as an attached PDF document.
+- The PDF may contain headers, footers, page numbers, and formatting noise.
+- Ignore tables of contents, headers, and footers unless they contain substantive content.
+- Use the PDF ONLY to understand what each ground-truth section actually contains.
+
+2) **GENAI RESPONSE (to search thoroughly)**
+This is the generated bidder response in Markdown:
+{genai_markdown}
+
+## LANGUAGE HANDLING
+- Ground truth sections and PDF content are in **SPANISH**
+- GenAI response may be **SPANISH and/or ENGLISH**
+- Evaluate **semantic equivalence** regardless of language
+
+## MATCHING RULES
+- A section is FOUND if the GenAI response contains the same intent and substantive content
+  as described in the attached PDF.
+- Keyword overlap alone is NOT sufficient.
+- Partial matches are allowed when only a subset of key points is present.
+
+## SCORING RUBRIC
+For each section, score independently:
+
+- **Presence (0–1)**: Is the section’s substance present?
+- **Completeness (0–1)**: Are all key points from the PDF section covered?
+- **Accuracy (0–1)**: Is the information consistent with the PDF?
+
+Scores must be based on the PDF content, not assumptions.
+
+## OUTPUT FORMAT (JSON array, no markdown)
+
+[
+  {
+    "section_id": "1",
+    "section_title_ground_truth": "string",
+    "found": true/false,
+    "presence_score": 0.0,
+    "completeness_score": 0.0,
+    "accuracy_score": 0.0,
+    "matched_headings_in_genai": [],
+    "matched_text": "",
+    "matched_locations": [],
+    "coverage_gap": "",
+    "reasoning": ""
+  }
+]
+
+IMPORTANT CONSTRAINTS
+- You MUST consult the attached PDF before scoring.
+- Do NOT hallucinate content not present in the GenAI response.
+- Prefer direct quotes from the GenAI response when populating matched_text.
+- Output MUST be valid JSON and MUST contain one object per ground-truth section.

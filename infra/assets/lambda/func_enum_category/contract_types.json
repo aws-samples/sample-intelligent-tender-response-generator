@@ -1,0 +1,26 @@
+[
+  {
+    "value": "public_works",
+    "label": "Concession of Public Works"
+  },
+  {
+    "value": "construction_works",
+    "label": "Construction works"
+  },
+  {
+    "value": "oil_gas",
+    "label": "Oil and gas"
+  },
+  {
+    "value": "patrimonial",
+    "label": "Patrimonial"
+  },
+  {
+    "value": "services",
+    "label": "Services"
+  },
+  {
+    "value": "supplies",
+    "label": "Supplies"
+  }
+]

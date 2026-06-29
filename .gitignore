@@ -1,0 +1,41 @@
+# ---- local tooling ----
+.claude/
+
+# ---- OS / editor ----
+.DS_Store
+**/.DS_Store
+.idea
+*.swp
+
+# ---- Python / CDK (infra) ----
+__pycache__
+.pytest_cache
+.venv
+*.egg-info
+.cdk.staging
+cdk.out
+cdk.context.json
+infra/package-lock.json
+
+# ---- Node / React (front-end) ----
+node_modules
+build
+.env
+.env.local
+
+# ---- infra local artifacts ----
+local_files
+infra/assets/llm_as_judge/response_evaluator/results/*
+infra/assets/llm_as_judge/response_evaluator/to_evaluate/*
+test_runtime.py
+
+# ---- Spark security scan outputs (local only) ----
+SPARK-Output/
+
+# Front-end zip created by FrontEndStack to seed CodeCommit
+front-end.zip
+front-end/*.zip
+
+# Local-only diagram backups / superseded copies (not part of the published sample)
+docs/backup/
+docs/achitecture_orignal.drawio

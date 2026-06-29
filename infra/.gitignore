@@ -1,0 +1,23 @@
+*.swp
+package-lock.json
+__pycache__
+.pytest_cache
+.venv
+*.egg-info
+*.DS_Store*
+
+# CDK asset staging directory
+.cdk.staging
+cdk.out
+
+
+# local files
+local_files
+cdk.context.json
+
+assets/llm_as_judge/response_evaluator/results/*
+assets/llm_as_judge/response_evaluator/to_evaluate/*
+
+test_runtime.py
+
+.idea

@@ -1,0 +1,16 @@
+json-repair
+boto3
+aws-opentelemetry-distro
+pypdf
+pymupdf
+
+# Core agent framework dependencies
+strands-agents>=0.1.0
+strands-agents-tools>=0.1.0
+bedrock-agentcore-starter-toolkit
+
+# Bedrock AgentCore runtime
+bedrock-agentcore>=1.0.6
+
+# Data validation and models
+pydantic>=2.0.0

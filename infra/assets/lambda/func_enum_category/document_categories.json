@@ -1,0 +1,49 @@
+[
+  {
+    "label": "Tender request categories",
+    "options": [
+      {
+        "value": "technical_specifications",
+        "label": "Technical specifications"
+      },
+      {
+        "value": "technical_specifications_modifications",
+        "label": "Technical specifications - amendment"
+      },
+      {
+        "value": "legal_clauses",
+        "label": "Administrative clauses"
+      },
+      {
+        "value": "legal_clauses_modifications",
+        "label": "Administrative clauses - amendment"
+      },
+      {
+        "value": "economic_requirements",
+        "label": "Economic requirements"
+      }
+    ]
+  },
+  {
+    "label": "Tender response categories",
+    "options": [
+      {
+        "value": "technical_response",
+        "label": "Technical response"
+      },
+      {
+        "value": "administrative_response",
+        "label": "Administrative response"
+      }
+    ]
+  },
+  {
+    "label": "Other categories",
+    "options": [
+      {
+        "value": "supporting_doc",
+        "label": "Supporting document"
+      }
+    ]
+  }
+]

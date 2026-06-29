@@ -1,0 +1,12 @@
+# Keep GitHub language stats meaningful: the large lock file is generated and
+# should not count toward the repository's language breakdown.
+front-end/package-lock.json linguist-generated=true
+
+# Normalize line endings to LF for text files.
+* text=auto eol=lf
+
+# Treat common binary assets as binary (no EOL normalization / diffing).
+*.png binary
+*.jpg binary
+*.ico binary
+*.pdf binary

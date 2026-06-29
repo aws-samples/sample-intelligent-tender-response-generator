@@ -1,0 +1,332 @@
+Parameters:
+  Suffix:
+    Type: String
+    Description: Name of the tender folder in lowercase letters.
+  S3URI:
+    Type: String
+    Description: Name of the tender folder.
+  BootstrapVersion:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /cdk-bootstrap/hnb659fds/version
+    Description: Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]
+Resources:
+  OSSCollection:
+    Type: AWS::OpenSearchServerless::Collection
+    Properties:
+      Name:
+        Fn::Sub: cl-${Suffix}
+      Type: VECTORSEARCH
+    Metadata:
+      aws:cdk:path: KbStack/OSSCollection
+  VectorIndex:
+    Type: AWS::OpenSearchServerless::Index
+    Properties:
+      CollectionEndpoint:
+        Fn::GetAtt:
+          - OSSCollection
+          - CollectionEndpoint
+      IndexName:
+        Fn::Sub: index-${Suffix}
+      Mappings:
+        Properties:
+          embedding:
+            Dimension: 3072
+            Method:
+              Engine: faiss
+              Name: hnsw
+              Parameters:
+                EfConstruction: 512
+                M: 16
+              SpaceType: l2
+            Type: knn_vector
+          text:
+            Type: text
+          metadata:
+            Type: text
+      Settings:
+        Index:
+          Knn: true
+    DependsOn:
+      - OSSCollection
+    Metadata:
+      aws:cdk:path: KbStack/VectorIndex
+  WaitForAossIndexReady:
+    Type: AWS::CloudFormation::CustomResource
+    Properties:
+      ServiceToken:
+        Fn::ImportValue: AossIndexWaiterProviderServiceToken
+      CollectionEndpoint:
+        Fn::GetAtt:
+          - OSSCollection
+          - CollectionEndpoint
+      IndexName:
+        Fn::Sub: index-${Suffix}
+    DependsOn:
+      - VectorIndex
+    UpdateReplacePolicy: Delete
+    DeletionPolicy: Delete
+    Metadata:
+      aws:cdk:path: KbStack/WaitForAossIndexReady/Default
+  KnowledgeBase:
+    Type: AWS::Bedrock::KnowledgeBase
+    Properties:
+      KnowledgeBaseConfiguration:
+        Type: VECTOR
+        VectorKnowledgeBaseConfiguration:
+          EmbeddingModelArn: arn:aws:bedrock:us-east-1::foundation-model/amazon.nova-2-multimodal-embeddings-v1:0
+          SupplementalDataStorageConfiguration:
+            SupplementalDataStorageLocations:
+              - S3Location:
+                  URI:
+                    Fn::Join:
+                      - ""
+                      - - s3://
+                        - Fn::ImportValue: MultimodalBucketName
+                SupplementalDataStorageLocationType: S3
+      Name:
+        Fn::Sub: kb-${Suffix}
+      RoleArn:
+        Fn::ImportValue: KbRoleARN
+      StorageConfiguration:
+        OpensearchServerlessConfiguration:
+          CollectionArn:
+            Fn::GetAtt:
+              - OSSCollection
+              - Arn
+          FieldMapping:
+            MetadataField: metadata
+            TextField: text
+            VectorField: embedding
+          VectorIndexName:
+            Fn::Sub: index-${Suffix}
+        Type: OPENSEARCH_SERVERLESS
+    DependsOn:
+      - WaitForAossIndexReady
+    Metadata:
+      aws:cdk:path: KbStack/KnowledgeBase
+  KnowledgeBaseDataSource:
+    Type: AWS::Bedrock::DataSource
+    Properties:
+      DataDeletionPolicy: DELETE
+      DataSourceConfiguration:
+        S3Configuration:
+          BucketArn:
+            Fn::ImportValue: InputBucketARN
+          InclusionPrefixes:
+            - Fn::Join:
+                - ""
+                - - Ref: S3URI
+                  - /to_index/
+        Type: S3
+      KnowledgeBaseId:
+        Fn::GetAtt:
+          - KnowledgeBase
+          - KnowledgeBaseId
+      Name:
+        Fn::Sub: data-source-${Suffix}
+      VectorIngestionConfiguration:
+        ChunkingConfiguration:
+          ChunkingStrategy: HIERARCHICAL
+          HierarchicalChunkingConfiguration:
+            LevelConfigurations:
+              - MaxTokens: 8192
+              - MaxTokens: 4096
+            OverlapTokens: 819
+        ParsingConfiguration:
+          BedrockFoundationModelConfiguration:
+            ModelArn:
+              Fn::Join:
+                - ""
+                - - "arn:aws:bedrock:"
+                  - Ref: AWS::Region
+                  - ":"
+                  - Ref: AWS::AccountId
+                  - :inference-profile/global.amazon.nova-2-lite-v1:0
+            ParsingModality: MULTIMODAL
+            ParsingPrompt:
+              ParsingPromptText: |-
+                Eres un parser especializado en documentos de licitación pública española del sector construcción.
+
+                ## REGLAS DE EXTRACCIÓN DE CASILLAS DE VERIFICACIÓN
+                Para campos con casillas de verificación:
+                - ☒ o [X] o [x] o "Sí se exige" = Extraer como [MARCADO] + texto del requisito
+                - ☐ o [ ] o "No se exige" = Extraer como [NO_MARCADO] + texto del requisito
+                - Casilla vacía o campos en blanco (------ €, .......) = [VALOR_NO_ESPECIFICADO]
+
+                ## ESTRUCTURA DE SALIDA
+                Para cada sección del documento, extraer:
+                ### 1. DATOS GENERALES
+                - Número de expediente
+                - Objeto del contrato
+                - Tipo de procedimiento
+                - Presupuesto base de licitación (sin IVA)
+                - Plazo de ejecución
+
+                ### 2. REQUISITOS DE SOLVENCIA (CRÍTICO - Verificar casillas)
+                - Clasificación del contratista (Grupo/Subgrupo/Categoría)
+                - [MARCADO/NO_MARCADO] Solvencia económica: volumen de negocios
+                - [MARCADO/NO_MARCADO] Solvencia técnica: obras similares ejecutadas
+                - [MARCADO/NO_MARCADO] Medios personales/materiales exigidos
+
+                ### 3. GARANTÍAS
+                - [MARCADO/NO_MARCADO] Garantía provisional: % y importe
+                - [MARCADO/NO_MARCADO] Garantía definitiva: % y importe
+
+                ### 4. CRITERIOS DE ADJUDICACIÓN
+                Para cada criterio extraer:
+                - Denominación del criterio
+                - Puntuación máxima (puntos)
+                - Tipo: juicio de valor / fórmula
+                - Extensión máxima (páginas)
+
+                ### 5. PLAZOS
+                - Fecha límite de presentación
+                - Plazo de ejecución
+                - Plazo de garantía
+
+                ### 6. DOCUMENTACIÓN REQUERIDA
+                - Sobre 1 (Documentación administrativa)
+                - Sobre 2 (Documentación técnica)
+                - Sobre 3 (Oferta económica)
+
+                ## INSTRUCCIONES ESPECIALES
+                1. Preservar referencias legales: "artículo X LCSP", "RD X/XXXX"
+                2. Mantener valores numéricos exactos: €, %, meses, días
+                3. Extraer tablas completas como formato markdown
+                4. NO interpretar - solo extraer lo que está escrito
+                5. Si un campo está en blanco, indicar [CAMPO_VACÍO]
+                6. Mantener el idioma español original
+          ParsingStrategy: BEDROCK_FOUNDATION_MODEL
+    DependsOn:
+      - KnowledgeBase
+    Metadata:
+      aws:cdk:path: KbStack/KnowledgeBaseDataSource
+  CDKMetadata:
+    Type: AWS::CDK::Metadata
+    Properties:
+      Analytics: v2:deflate64:H4sIAAAAAAAA/zWOQQ6CMBREzyJLU6qCJxA3xoUElsaYUr5SKS3p/xUN4e5SjauZzLxJJuFJmvL1QgwYy7qNtar4WJKQLctuJhdOdEDg2NxfR9uDQRBONgjuCU4DIh9nLrNagyRlTVgdTA2viVVQOyvbL3A0dtBQ32EnEAKzFyRK652EaWKZR7JdAfgNztEyugTmHwR/8tR7mlj+psaaVco32/n1A5WKnTekOuDFTz+gQM7o0gAAAA==
+    Metadata:
+      aws:cdk:path: KbStack/CDKMetadata/Default
+    Condition: CDKMetadataAvailable
+Outputs:
+  DataSourceId:
+    Value:
+      Fn::GetAtt:
+        - KnowledgeBaseDataSource
+        - DataSourceId
+    Export:
+      Name:
+        Fn::Join:
+          - ""
+          - - Ref: Suffix
+            - -DataSourceId
+  KnowledgeBaseId:
+    Value:
+      Fn::GetAtt:
+        - KnowledgeBase
+        - KnowledgeBaseId
+    Export:
+      Name:
+        Fn::Join:
+          - ""
+          - - Ref: Suffix
+            - -KnowledgeBaseId
+Conditions:
+  CDKMetadataAvailable:
+    Fn::Or:
+      - Fn::Or:
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - af-south-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-east-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-northeast-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-northeast-2
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-northeast-3
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-south-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-south-2
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-southeast-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-southeast-2
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-southeast-3
+      - Fn::Or:
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ap-southeast-4
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ca-central-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - ca-west-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - cn-north-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - cn-northwest-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-central-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-central-2
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-north-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-south-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-south-2
+      - Fn::Or:
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-west-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-west-2
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - eu-west-3
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - il-central-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - me-central-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - me-south-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - sa-east-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - us-east-1
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - us-east-2
+          - Fn::Equals:
+              - Ref: AWS::Region
+              - us-west-1
+      - Fn::Equals:
+          - Ref: AWS::Region
+          - us-west-2
