@@ -1,6 +1,7 @@
-import boto3
 import os
 import time
+
+from ..utils.solution_boto3 import get_resource
 
 
 TABLE_NAME = os.environ.get("TABLE_RUNTIME_INVOCATIONS")
@@ -8,7 +9,7 @@ KEY = 'Id'
 TTL_ATTR = 'ExpiresAt'
 TTL_EPOCH = 3600 * 24 * 30 # 30 days
 
-ddb = boto3.resource('dynamodb')
+ddb = get_resource('dynamodb')
 
 
 def put_runtime_invocation(item, ttl: int=TTL_EPOCH):

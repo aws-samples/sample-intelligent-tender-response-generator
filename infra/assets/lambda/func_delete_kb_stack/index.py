@@ -1,9 +1,8 @@
 import json
-import boto3
 
 from system_layer import *
 
-client = boto3.client('cloudformation')
+client = get_client('cloudformation')
 
 
 @cors_enabler

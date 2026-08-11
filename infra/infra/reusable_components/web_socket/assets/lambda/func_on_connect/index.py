@@ -1,12 +1,18 @@
 import os, time, boto3
 
+from botocore.config import Config
+
 TABLE_NAME = os.environ["TABLE_NAME"]
 TTL_ATTR = os.environ.get("TTL_ATTR", 'ExpiresAt')
 
 TTL_HOURS = int(os.environ.get("TTL_HOURS", "14"))
 TTL_EPOCH = 3600 * TTL_HOURS
 
-dynamo = boto3.resource("dynamodb")
+# Identifies this solution's AWS service API calls. This function does not use the
+# system layer, so the user agent the stack supplies is applied here directly.
+CONFIG = Config(user_agent_extra=os.environ.get("USER_AGENT_STRING", ""))
+
+dynamo = boto3.resource("dynamodb", config=CONFIG)
 table = dynamo.Table(TABLE_NAME)
 
 

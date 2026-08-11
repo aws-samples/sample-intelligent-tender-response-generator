@@ -5,6 +5,7 @@ import logging
 import threading
 import boto3
 
+from botocore.config import Config
 from json_repair import repair_json
 from pdf_utils import *
 from s3_utils import *
@@ -24,9 +25,14 @@ QUEUE_URL = os.environ.get('RUNTIME_INVOCATIONS_QUEUE_URL', 'https://sqs.us-east
 RUNNING_LOCALLY = os.environ.get('RUNNING_LOCALLY', '1') == '1'
 
 app = BedrockAgentCoreApp(debug=True)
-sqs = boto3.client("sqs")
-s3 = boto3.client("s3")
-bedrock = boto3.client("bedrock-runtime")
+
+# Identifies this solution's AWS service API calls, including its Bedrock traffic.
+# The user agent is supplied by the deployed stack.
+SOLUTION_CONFIG = Config(user_agent_extra=os.environ.get("USER_AGENT_STRING", ""))
+
+sqs = boto3.client("sqs", config=SOLUTION_CONFIG)
+s3 = boto3.client("s3", config=SOLUTION_CONFIG)
+bedrock = boto3.client("bedrock-runtime", config=SOLUTION_CONFIG)
 
 
 def send_to_queue(task_id, success, error=None, response=None):

@@ -1,14 +1,22 @@
 import boto3
 import json
 import logging
+import os
 import time
 import urllib3
+
+from botocore.config import Config
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 http = urllib3.PoolManager()
-codebuild = boto3.client("codebuild")
+
+# Identifies this solution's AWS service API calls. This function does not use the
+# system layer, so the user agent the stack supplies is applied here directly.
+CONFIG = Config(user_agent_extra=os.environ.get("USER_AGENT_STRING", ""))
+
+codebuild = boto3.client("codebuild", config=CONFIG)
 
 
 class cfnresponse:

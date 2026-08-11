@@ -1,4 +1,3 @@
-import boto3
 import os
 import json
 
@@ -16,7 +15,7 @@ RAW_FILES_BUCKET = os.environ['RAW_FILES_BUCKET']
 STAGING_BUCKET = os.environ['STAGING_BUCKET']
 DOCUMENT_CLASSIFIER_RUNTIME_ARN = os.environ['DOCUMENT_CLASSIFIER_RUNTIME_ARN']
 
-agentcore_client = boto3.client("bedrock-agentcore")
+agentcore_client = get_client("bedrock-agentcore")
 
 
 def index(context: DurableContext, analysis):

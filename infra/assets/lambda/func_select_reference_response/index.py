@@ -1,13 +1,12 @@
 import os
 import json
-import boto3
 
 from system_layer import *
 
 BUCKET = os.environ['BUCKET']
 CLEAN_FILES_BUCKET = os.environ['CLEAN_FILES_BUCKET']
 
-s3_client = boto3.client('s3')
+s3_client = get_client('s3')
 
 
 def list_files(path):

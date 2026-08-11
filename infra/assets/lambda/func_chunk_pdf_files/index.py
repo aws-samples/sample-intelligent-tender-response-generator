@@ -2,14 +2,13 @@ import json
 import os
 import re
 import tempfile
-import boto3
 
 from system_layer import *
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pypdf import PdfReader, PdfWriter
 from boto3.s3.transfer import TransferConfig
 
-s3 = boto3.client("s3")
+s3 = get_client("s3")
 
 MAX_PAGES = int(os.environ.get("MAX_PAGES", "100"))
 OVERLAP = min(float(os.environ.get("PAGE_OVERLAP", "0.1")), 0.3)

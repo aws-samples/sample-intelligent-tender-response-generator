@@ -59,13 +59,26 @@ logger = logging.getLogger(__name__)
 logging.getLogger("strands").setLevel(logging.INFO)
 logging.getLogger("botocore").setLevel(logging.WARNING)
 
-sqs = boto3.client("sqs")
-
 from botocore.config import Config as BotocoreConfig
 from strands import Agent, tool
 from strands.models import BedrockModel
 from strands.multiagent.graph import GraphBuilder
 from strands.types.content import ContentBlock
+
+# Identifies this solution's AWS service API calls, including the Bedrock traffic
+# the agents below generate. The user agent is supplied by the deployed stack.
+SOLUTION_USER_AGENT = os.environ.get("USER_AGENT_STRING", "")
+SOLUTION_CONFIG = BotocoreConfig(user_agent_extra=SOLUTION_USER_AGENT)
+
+# BedrockModel only applies its own 120s read timeout when it builds the client
+# config itself, so the timeout is restated here for the config we hand it.
+BEDROCK_READ_TIMEOUT = 120
+SOLUTION_BEDROCK_CONFIG = BotocoreConfig(
+    user_agent_extra=SOLUTION_USER_AGENT,
+    read_timeout=BEDROCK_READ_TIMEOUT
+)
+
+sqs = boto3.client("sqs", config=SOLUTION_CONFIG)
 
 # =============================================================================
 # CHECK FOR LOCAL MODE BEFORE IMPORTING AGENTCORE
@@ -125,7 +138,9 @@ def create_retrieve_tool(category: str):
         logger.info(f"   Query: {text[:100]}{'...' if len(text) > 100 else ''}")
         logger.info(f"   numberOfResults: {numberOfResults}, score: {score}, searchType: {searchType}")
         
-        config = BotocoreConfig(user_agent_extra=f"strands-agents-retrieve-{category.lower()}")
+        config = BotocoreConfig(
+            user_agent_extra=f"{SOLUTION_USER_AGENT} strands-agents-retrieve-{category.lower()}".strip()
+        )
         client = boto3.client("bedrock-agent-runtime", region_name=region_name, config=config)
         
         try:
@@ -248,7 +263,7 @@ def save_to_s3(
     
     key = f"{tender_id}/{run_timestamp}/{subfolder}/{filename}"
     
-    s3_client = boto3.client("s3", region_name=region)
+    s3_client = boto3.client("s3", region_name=region, config=SOLUTION_CONFIG)
     s3_client.put_object(
         Bucket=bucket_name,
         Key=key,
@@ -264,7 +279,7 @@ def save_to_s3(
 def read_pdf_from_s3(s3_uri: str) -> bytes:
     """Read a PDF file from S3 and return its content as bytes."""
     region = os.getenv("AWS_REGION", "us-east-1")
-    s3_client = boto3.client("s3", region_name=region)
+    s3_client = boto3.client("s3", region_name=region, config=SOLUTION_CONFIG)
     
     if not s3_uri.startswith("s3://"):
         raise ValueError(f"Invalid S3 URI format: {s3_uri}")
@@ -289,7 +304,7 @@ def read_pdf_from_s3(s3_uri: str) -> bytes:
 def read_text_from_s3(s3_uri: str) -> str:
     """Read a text/markdown file from S3 and return its content as string."""
     region = os.getenv("AWS_REGION", "us-east-1")
-    s3_client = boto3.client("s3", region_name=region)
+    s3_client = boto3.client("s3", region_name=region, config=SOLUTION_CONFIG)
     
     if not s3_uri.startswith("s3://"):
         raise ValueError(f"Invalid S3 URI format: {s3_uri}")
@@ -313,7 +328,7 @@ def read_text_from_s3(s3_uri: str) -> str:
 def read_json_from_s3(s3_uri: str) -> dict:
     """Read a JSON file from S3 and return its content as dict."""
     region = os.getenv("AWS_REGION", "us-east-1")
-    s3_client = boto3.client("s3", region_name=region)
+    s3_client = boto3.client("s3", region_name=region, config=SOLUTION_CONFIG)
     
     if not s3_uri.startswith("s3://"):
         raise ValueError(f"Invalid S3 URI format: {s3_uri}")
@@ -361,7 +376,7 @@ def copy_pdf_to_reference_folder(
     """
     output_bucket = os.getenv("OUTPUT_BUCKET")
     region = os.getenv("AWS_REGION", "us-east-1")
-    s3_client = boto3.client("s3", region_name=region)
+    s3_client = boto3.client("s3", region_name=region, config=SOLUTION_CONFIG)
     
     # Parse source URI
     if not source_s3_uri.startswith("s3://"):
@@ -453,7 +468,8 @@ def create_agents(region_name: str = "us-east-1"):
     # Model configuration
     model = BedrockModel(
         model_id=MULTI_AGENT_MODEL_ID,
-        region_name=region_name
+        region_name=region_name,
+        boto_client_config=SOLUTION_BEDROCK_CONFIG
     )
     
     # Technical Specifications Agent
@@ -486,7 +502,8 @@ def create_agents(region_name: str = "us-east-1"):
     # Response Generator Model
     response_generator_model = BedrockModel(
         model_id=RESPONSE_GENERATOR_MODEL_ID,
-        region_name=region_name
+        region_name=region_name,
+        boto_client_config=SOLUTION_BEDROCK_CONFIG
     )
     logger.info("✓ Response Generator Model configured")
     

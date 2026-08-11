@@ -1,6 +1,5 @@
 import os
 import json
-import boto3
 import datetime
 
 from system_layer import *
@@ -8,7 +7,7 @@ from system_layer import *
 
 ORCHESTRATOR_FUNC = os.environ["ORCHESTRATOR_FUNC"]
 
-lambda_client = boto3.client("lambda")
+lambda_client = get_client("lambda")
 
 
 def create_analysis(analysis_id, kb_stack_name, reference_tender, contract_type_id):

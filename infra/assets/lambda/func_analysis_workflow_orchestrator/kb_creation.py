@@ -1,4 +1,3 @@
-import boto3
 import os
 
 from aws_durable_execution_sdk_python import (
@@ -20,7 +19,7 @@ SOLUTION_ID = os.environ['SOLUTION_ID']
 SOLUTION_NAME = os.environ['SOLUTION_NAME']
 SOLUTION_VERSION = os.environ['SOLUTION_VERSION']
 
-cf_client = boto3.client('cloudformation')
+cf_client = get_client('cloudformation')
 
 
 def index(context: DurableContext, analysis):

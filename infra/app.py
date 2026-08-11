@@ -9,6 +9,7 @@ from infra.agentcore_stack import AgentCoreStack
 from infra.core_stack import CoreStack
 from infra.frontend_stack import FrontendStack
 from infra.infra_stack import InfraStack
+from infra.reusable_components import SolutionUserAgentAspect
 
 with open("project_config.json", "r") as file:
     variables = json.load(file)
@@ -26,6 +27,10 @@ cdk.Tags.of(app).add("auto-stop", "no")
 cdk.Tags.of(app).add("Solutions:SolutionID", solution["id"])
 cdk.Tags.of(app).add("Solutions:SolutionName", solution["name"])
 cdk.Tags.of(app).add("Solutions:SolutionVersion", solution["version"])
+
+# Identify the AWS service API calls this solution makes, so its API usage can
+# be attributed to the solution and its version.
+user_agent = f"AWSSOLUTION/{solution['id']}/{solution['version']}"
 
 env = cdk.Environment(
     account=app.node.try_get_context("account") or os.environ.get("CDK_DEFAULT_ACCOUNT"),
@@ -48,6 +53,7 @@ agentcore_stack = AgentCoreStack(
     app,
     variables["stacks"]["agent_core_stack_name"],
     core_stack,
+    user_agent=user_agent,
     env=env
 )
 
@@ -62,6 +68,8 @@ infra_stack = InfraStack(
 
 agentcore_stack.response_generator_app.grant_invoke(infra_stack.orchestrator_func)
 agentcore_stack.document_classifier_app.grant_invoke(infra_stack.orchestrator_func)
+
+Aspects.of(app).add(SolutionUserAgentAspect(user_agent))
 
 Aspects.of(app).add(cdk_nag.AwsSolutionsChecks(reports=True, verbose=True))
 
