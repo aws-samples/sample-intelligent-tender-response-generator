@@ -15,9 +15,17 @@ with open("project_config.json", "r") as file:
 
 app = cdk.App()
 
+solution = variables["solution"]
+
 # Apply common tags to all stacks/resources synthesized by this app.
 cdk.Tags.of(app).add("auto-delete", "no")
 cdk.Tags.of(app).add("auto-stop", "no")
+
+# Identify every resource as belonging to this AWS Solution so deployed
+# resources can be attributed back to the solution and its version.
+cdk.Tags.of(app).add("Solutions:SolutionID", solution["id"])
+cdk.Tags.of(app).add("Solutions:SolutionName", solution["name"])
+cdk.Tags.of(app).add("Solutions:SolutionVersion", solution["version"])
 
 env = cdk.Environment(
     account=app.node.try_get_context("account") or os.environ.get("CDK_DEFAULT_ACCOUNT"),

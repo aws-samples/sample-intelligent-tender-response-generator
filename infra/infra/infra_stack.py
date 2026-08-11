@@ -1,3 +1,5 @@
+import json
+
 from aws_cdk import (
     aws_dynamodb as ddb,
     aws_lambda as _lambda,
@@ -48,6 +50,9 @@ class InfraStack(Stack):
                                   response_generator_runtime_arn, document_classifier_runtime_arn, table_runtime_invocations):
         runtime = _lambda.Runtime.PYTHON_3_14
         arch = _lambda.Architecture.ARM_64
+
+        with open('project_config.json', 'r') as file:
+            solution = json.load(file)['solution']
 
         layer = _lambda.LayerVersion(
             self, 'LayerVersion',
@@ -120,7 +125,12 @@ class InfraStack(Stack):
                 'RAW_FILES_BUCKET': raw_files_bucket.bucket_name,
                 'STAGING_BUCKET': staging_bucket.bucket_name,
                 'CLEAN_FILES_BUCKET': clean_files_bucket.bucket_name,
-                'OUTPUT_FILES_BUCKET': output_files_bucket.bucket_name
+                'OUTPUT_FILES_BUCKET': output_files_bucket.bucket_name,
+                # Propagated onto the Knowledge Base stacks this function creates
+                # at runtime, which do not inherit the CDK app-level tags.
+                'SOLUTION_ID': solution['id'],
+                'SOLUTION_NAME': solution['name'],
+                'SOLUTION_VERSION': solution['version']
             }
         )
 
