@@ -1,4 +1,9 @@
 {
+    "solution": {
+        "id": "SO0350",
+        "name": "Intelligent Tender Response Generator",
+        "version": "v1.0.0"
+    },
     "stacks": {
         "core_stack_name": "CoreStack",
         "back_end_stack_name": "BackEndStack",
