@@ -39,3 +39,6 @@ front-end/*.zip
 # Local-only diagram backups / superseded copies (not part of the published sample)
 docs/backup/
 docs/achitecture_orignal.drawio
+
+# Local-only scratch: sample tender PDFs and cloned reference repos
+local_folder/

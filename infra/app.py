@@ -26,6 +26,18 @@ cdk.Tags.of(app).add("auto-stop", "no")
 # be attributed to the solution and its version.
 user_agent = f"AWSSOLUTION/{solution['id']}/{solution['version']}"
 
+
+def solution_description(component: str) -> str:
+    """Build a stack description carrying the solution identifier.
+
+    Deployments of this solution are counted by matching the solution id in the
+    description of each deployed CloudFormation stack, so every stack below
+    carries one. The component name distinguishes the stacks from each other.
+    """
+    return (f"({solution['id']}) - {solution['name']} - {component}. "
+            f"Version {solution['version']}")
+
+
 env = cdk.Environment(
     account=app.node.try_get_context("account") or os.environ.get("CDK_DEFAULT_ACCOUNT"),
     region=app.node.try_get_context("region") or os.environ.get("CDK_DEFAULT_REGION"),
@@ -34,12 +46,14 @@ env = cdk.Environment(
 core_stack = CoreStack(
     app,
     variables["stacks"]["core_stack_name"],
+    description=solution_description("document storage"),
     env=env
 )
 
 frontend_stack = FrontendStack(
     app,
     variables["stacks"]["front_end_stack_name"],
+    description=solution_description("web application"),
     env=env
 )
 
@@ -48,6 +62,7 @@ agentcore_stack = AgentCoreStack(
     variables["stacks"]["agent_core_stack_name"],
     core_stack,
     user_agent=user_agent,
+    description=solution_description("agent runtimes"),
     env=env
 )
 
@@ -57,6 +72,7 @@ infra_stack = InfraStack(
     core_stack=core_stack,
     agentcore_stack=agentcore_stack,
     frontend_stack=frontend_stack,
+    description=solution_description("analysis workflow"),
     env=env
 )
 
