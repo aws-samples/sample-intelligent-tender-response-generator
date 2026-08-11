@@ -22,12 +22,6 @@ solution = variables["solution"]
 cdk.Tags.of(app).add("auto-delete", "no")
 cdk.Tags.of(app).add("auto-stop", "no")
 
-# Identify every resource as belonging to this AWS Solution so deployed
-# resources can be attributed back to the solution and its version.
-cdk.Tags.of(app).add("Solutions:SolutionID", solution["id"])
-cdk.Tags.of(app).add("Solutions:SolutionName", solution["name"])
-cdk.Tags.of(app).add("Solutions:SolutionVersion", solution["version"])
-
 # Identify the AWS service API calls this solution makes, so its API usage can
 # be attributed to the solution and its version.
 user_agent = f"AWSSOLUTION/{solution['id']}/{solution['version']}"
