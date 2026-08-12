@@ -1,11 +1,10 @@
-import boto3
 import os
 import json
 
 from system_layer import *
 
 
-s3 = boto3.client("s3")
+s3 = get_client("s3")
 BUCKET = os.environ["SRC_BUCKET"]
 
 

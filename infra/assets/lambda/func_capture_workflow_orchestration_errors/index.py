@@ -1,9 +1,8 @@
-import boto3
 import json
 
 from system_layer import *
 
-lambda_client = boto3.client('lambda')
+lambda_client = get_client('lambda')
 
 
 def handler(event, context):

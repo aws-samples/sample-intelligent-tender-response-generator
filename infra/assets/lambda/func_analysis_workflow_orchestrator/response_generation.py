@@ -1,4 +1,3 @@
-import boto3
 import os
 import json
 
@@ -16,7 +15,7 @@ CLEAN_FILES_BUCKET = os.environ['CLEAN_FILES_BUCKET']
 OUTPUT_FILES_BUCKET = os.environ['OUTPUT_FILES_BUCKET']
 RESPONSE_GENERATOR_RUNTIME_ARN = os.environ['RESPONSE_GENERATOR_RUNTIME_ARN']
 
-agentcore_client = boto3.client("bedrock-agentcore")
+agentcore_client = get_client("bedrock-agentcore")
 
 
 def index(context: DurableContext, analysis, kb_id):

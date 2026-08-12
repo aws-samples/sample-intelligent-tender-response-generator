@@ -8,7 +8,7 @@ from cdk_nag import NagSuppressions
 
 
 class AgentCoreStack(Stack):
-    def __init__(self, scope: Construct, construct_id: str, core_stack, **kwargs) -> None:
+    def __init__(self, scope: Construct, construct_id: str, core_stack, user_agent: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
         self.response_generator_app = AgentCoreAppPattern(
@@ -18,7 +18,10 @@ class AgentCoreStack(Stack):
                 source_code_path='assets/agent_code/response_generator',
                 agent_runtime_environment_variables={
                     'MULTI_AGENT_MODEL_ID': 'us.anthropic.claude-sonnet-4-5-20250929-v1:0',
-                    'RESPONSE_GENERATOR_MODEL_ID': 'us.anthropic.claude-opus-4-6-v1'
+                    'RESPONSE_GENERATOR_MODEL_ID': 'us.anthropic.claude-opus-4-6-v1',
+                    # The agent runtimes are not Lambda functions, so they take the
+                    # user agent through their own environment configuration.
+                    'USER_AGENT_STRING': user_agent
                 }
             )
         )
@@ -33,7 +36,8 @@ class AgentCoreStack(Stack):
                     'RAW_FILES_BUCKET': core_stack.raw_files_bucket.bucket_name,
                     'STAGING_BUCKET': core_stack.staging_bucket.bucket_name,
                     'HISTORIC_FILES_BUCKET': core_stack.historic_files_bucket.bucket_name,
-                    'RUNNING_LOCALLY': '0'
+                    'RUNNING_LOCALLY': '0',
+                    'USER_AGENT_STRING': user_agent
                 },
                 runtime_invocations_table=self.response_generator_app.runtime_invocations_table,
                 runtime_invocations_queue=self.response_generator_app.runtime_invocations_queue,

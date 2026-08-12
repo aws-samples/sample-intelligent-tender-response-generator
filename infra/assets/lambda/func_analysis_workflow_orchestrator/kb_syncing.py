@@ -1,4 +1,3 @@
-import boto3
 
 from aws_durable_execution_sdk_python import (
     DurableContext,
@@ -10,7 +9,7 @@ from aws_durable_execution_sdk_python.waits import WaitForConditionConfig, WaitF
 from system_layer import *
 
 
-bedrock_client = boto3.client('bedrock-agent')
+bedrock_client = get_client('bedrock-agent')
 
 KB_SYNC_DONE_STATUS = ('COMPLETE', 'FAILED')
 

@@ -1,4 +1,3 @@
-import boto3
 import os
 
 from aws_durable_execution_sdk_python import (
@@ -14,13 +13,7 @@ from system_layer import *
 CF_DEPLOY_ARN = os.environ['CF_DEPLOY_ARN']
 CF_DONE_STATUS = ('CREATE_FAILED', 'CREATE_COMPLETE', 'ROLLBACK_FAILED', 'ROLLBACK_COMPLETE')
 
-# Knowledge Base stacks are created by this function at runtime, so they do not
-# inherit the tags the CDK app applies to the resources it synthesizes.
-SOLUTION_ID = os.environ['SOLUTION_ID']
-SOLUTION_NAME = os.environ['SOLUTION_NAME']
-SOLUTION_VERSION = os.environ['SOLUTION_VERSION']
-
-cf_client = boto3.client('cloudformation')
+cf_client = get_client('cloudformation')
 
 
 def index(context: DurableContext, analysis):
@@ -74,18 +67,6 @@ def __deploy_kb_stack(context: StepContext, analysis):
             {
                 'Key': 'auto-delete',
                 'Value': 'no'
-            },
-            {
-                'Key': 'Solutions:SolutionID',
-                'Value': SOLUTION_ID
-            },
-            {
-                'Key': 'Solutions:SolutionName',
-                'Value': SOLUTION_NAME
-            },
-            {
-                'Key': 'Solutions:SolutionVersion',
-                'Value': SOLUTION_VERSION
             }
         ]
     )

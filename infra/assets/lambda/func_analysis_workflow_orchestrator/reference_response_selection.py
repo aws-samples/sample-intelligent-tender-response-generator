@@ -1,4 +1,3 @@
-import boto3
 import os
 import json
 
@@ -12,7 +11,7 @@ from system_layer import *
 
 FUNC_SELECT_REFERENCE_RESPONSE = os.environ["FUNC_SELECT_REFERENCE_RESPONSE"]
 
-lambda_client = boto3.client("lambda")
+lambda_client = get_client("lambda")
 
 
 def index(context: DurableContext, analysis):

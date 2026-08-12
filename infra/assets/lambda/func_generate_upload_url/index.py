@@ -1,11 +1,10 @@
 import os
 import json
-import boto3
 import re
 
 from system_layer import *
 
-s3 = boto3.client("s3")
+s3 = get_client("s3")
 BUCKET = os.environ["DST_BUCKET"]
 
 SUPPORTED_FILE_FORMATS = {

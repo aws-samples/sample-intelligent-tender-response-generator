@@ -1,5 +1,4 @@
 import os
-import boto3
 import json
 
 from system_layer import *
@@ -7,7 +6,7 @@ from system_layer import *
 BUCKET = os.environ['BUCKET']
 MAX_LEVELS = int(os.environ.get('MAX_LEVELS', 3))
 
-s3_client = boto3.client('s3')
+s3_client = get_client('s3')
 
 
 def list_directory(prefix, max_keys=1000):

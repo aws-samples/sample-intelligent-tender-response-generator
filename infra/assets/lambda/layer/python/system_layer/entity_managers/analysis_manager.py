@@ -1,8 +1,8 @@
-import boto3
 import os
 
 from botocore.exceptions import ClientError
 from ..constants import *
+from ..utils.solution_boto3 import get_client, get_resource
 
 TABLE_NAME = os.environ.get('TABLE_ANALYSIS')
 RAW_FILES_BUCKET = os.environ.get('RAW_FILES_BUCKET')
@@ -12,9 +12,9 @@ OUTPUT_FILES_BUCKET = os.environ.get('OUTPUT_FILES_BUCKET')
 
 KEY = 'Id'
 
-ddb = boto3.resource('dynamodb')
-s3_client = boto3.client('s3')
-s3_resource = boto3.resource('s3')
+ddb = get_resource('dynamodb')
+s3_client = get_client('s3')
+s3_resource = get_resource('s3')
 
 
 def put_analysis(item):

@@ -1,18 +1,19 @@
 import os
 import json
-import boto3
 
 from boto3.dynamodb.conditions import Key
 
+from ..utils.solution_boto3 import get_client, get_resource
 
-dynamodb = boto3.resource("dynamodb")
+
+dynamodb = get_resource("dynamodb")
 
 
 def __post_message(connections, message):
     table = dynamodb.Table(os.environ["CONNECTIONS_TABLE"])
 
     for conn in connections:
-        api_client = boto3.client(
+        api_client = get_client(
             "apigatewaymanagementapi",
             endpoint_url=conn["callbackUrl"]
         )

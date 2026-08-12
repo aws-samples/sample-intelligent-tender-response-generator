@@ -1,9 +1,15 @@
 import os, json, boto3
 
+from botocore.config import Config
 from json import JSONDecodeError
 
 TABLE = os.environ["TABLE_NAME"]
-dynamo = boto3.resource("dynamodb")
+
+# Identifies this solution's AWS service API calls. This function does not use the
+# system layer, so the user agent the stack supplies is applied here directly.
+CONFIG = Config(user_agent_extra=os.environ.get("USER_AGENT_STRING", ""))
+
+dynamo = boto3.resource("dynamodb", config=CONFIG)
 table = dynamo.Table(TABLE)
 
 
@@ -28,7 +34,7 @@ def handler(event, context):
         "received": body,
     }
 
-    mgmt = boto3.client("apigatewaymanagementapi", endpoint_url=f"https://{domain}/{stage}")
+    mgmt = boto3.client("apigatewaymanagementapi", endpoint_url=f"https://{domain}/{stage}", config=CONFIG)
     mgmt.post_to_connection(ConnectionId=connection_id, Data=json.dumps(payload).encode("utf-8"))
 
     return {"statusCode": 200}
