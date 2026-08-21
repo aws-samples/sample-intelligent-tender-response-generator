@@ -144,5 +144,10 @@ class FrontendStack(Stack):
                         "Policy::arn:<AWS::Partition>:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
                     ],
                 },
+                {
+                    "id": "AwsSolutions-L1",
+                    "reason": "Lambda runtime for the CDK-managed AwsCustomResource provider is "
+                              "controlled by the framework, not by this stack.",
+                },
             ],
         )
