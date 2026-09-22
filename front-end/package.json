@@ -15,7 +15,7 @@
     "react-dom": "^19.1.1",
     "react-markdown": "^10.1.0",
     "react-oidc-context": "^3.3.0",
-    "react-router-dom": "^7.9.3",
+    "react-router-dom": "^7.18.4",
     "react-scripts": "5.0.1",
     "rehype-sanitize": "^6.0.0",
     "remark-gfm": "^4.0.1",
